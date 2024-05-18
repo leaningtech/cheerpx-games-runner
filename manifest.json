@@ -5,7 +5,6 @@
   "version": "42.42.42",
   "icons": { "128":"cheerpx128x128.png", "32":"cheerpx32x32.png" },
   "action" : {
-    "default_popup": "popup.html",
     "default_icon": { "128":"cheerpx128x128.png", "32":"cheerpx32x32.png" },
     "default_title": "Visit GOG to play games"
   },
@@ -16,12 +15,6 @@
     {
       "resources": [ ],
       "matches": [ "<all_urls>" ]
-    }
-  ],
-  "content_scripts": [
-    {
-      "matches": ["https://*.gog.com/*"],
-      "js": ["gog.js"]
     }
   ],
   "host_permissions": [
