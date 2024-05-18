@@ -11,8 +11,8 @@ body {
         height: 100vh;
         display: flex;
         align-items: center;
-        flex-direction: column;
-        justify-content: space-between;
+        flex-direction: row;
+        justify-content: space-around;
 }
 
 body > div
@@ -21,6 +21,7 @@ body > div
         align-items: center;
         flex-direction: column;
         justify-content: space-between;
+        width: 50%;
 }
 
 div#gamesList
@@ -29,7 +30,6 @@ div#gamesList
         align-items: center;
         flex-direction: column;
         justify-content: flex-start;
-	width: 600px;
 	height: 100%;
 	overflow-y: auto;
 	cursor: pointer;
