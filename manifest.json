@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "CheerpX Games Runner",
+  "description": "Play your games directly in the browser",
+  "version": "42.42.42",
+  "icons": { "128":"cheerpx128x128.png", "32":"cheerpx32x32.png" },
+  "action" : {
+    "default_popup": "popup.html",
+    "default_icon": { "128":"cheerpx128x128.png", "32":"cheerpx32x32.png" },
+    "default_title": "Visit GOG to play games"
+  },
+  "background": {
+    "service_worker": "bg.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [ ],
+      "matches": [ "<all_urls>" ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://*.gog.com/*"],
+      "js": ["gog.js"]
+    }
+  ],
+  "host_permissions": [
+    "https://*.gog.com/*"
+  ]
+}
