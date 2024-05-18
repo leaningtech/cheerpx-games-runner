@@ -1,2 +1,5 @@
-// This will automatically gray out the icon for all pages but GOG
-chrome.action.disable();
+function handleClick()
+{
+	chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
+}
+chrome.action.onClicked.addListener(handleClick);
