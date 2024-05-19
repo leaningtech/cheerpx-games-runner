@@ -1,6 +1,5 @@
 async function getGamesData()
 {
-	chrome.runtime.sendMessage({type: "enableTab"});
 	// TODO: Cache data and only update new entries in licenses
 	try
 	{
@@ -39,7 +38,8 @@ function createGameDiv(id, title, imgUrl)
 	d.setAttribute("data-id", id);
 	d.addEventListener("click", handleGameStart);
 	var i = document.createElement("img");
-	i.src = imgUrl;
+	// Add a prefix to allow interception by service worker
+	i.src = "@" + imgUrl;
 	d.appendChild(i);
 	var t = document.createElement("span");
 	t.textContent = title;
