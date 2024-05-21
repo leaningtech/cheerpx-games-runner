@@ -5,16 +5,15 @@
     <title>CheerpX Games Runner</title>
     <link rel="stylesheet" href="cheerpx.css">
     <script src="gog.js"></script>
+    <script src="ppdeploy/cx.js"></script>
   </head>
   <body>
     <div id="gamesList" title="Click a game to play">
     </div>
     <div>
-      <div id="gamesLoading">
-        <h1>Games are loading</h1>
-        <div id="spinner">
-          <img src="assets/spinner.svg" alt="Games are loading" width="300"/>
-        </div>
+      <h1 id="statusMessage"></h1>
+      <div id="spinner">
+        <img src="assets/spinner.svg" alt="Please wait" width="300"/>
       </div>
     </div>
   </body>
