@@ -1,3 +1,44 @@
+var pendingMessages = [];
+var cxLinuxChannel = new MessageChannel();
+var cxLinuxPort = cxLinuxChannel.port1;
+cxLinuxPort.onmessage = cxLinuxMsg;
+function cxLinuxMsg(m)
+{
+	var data = m.data;
+	if(data.type == "response")
+	{
+		// Generic code path to get results via messages
+		var cb = pendingMessages[data.responseId];
+		pendingMessages[data.responseId] = null;
+		cb(data.value);
+	}
+	else if(data.type == "status")
+	{
+		var statusMessage = document.getElementById("statusMessage");
+		statusMessage.textContent = data.status;
+	}
+	else
+	{
+		debugger;
+	}
+}
+function allocatePendingMessageId(cb)
+{
+	var ret = pendingMessages.indexOf(null);
+	if(ret < 0)
+		ret = pendingMessages.length;
+	pendingMessages[ret] = cb;
+	return ret;
+}
+async function sendMessageAndWaitReply(port, msg)
+{
+	return new Promise(function (f, r)
+	{
+		var responseId = allocatePendingMessageId(f);
+		msg.responseId = responseId;
+		port.postMessage(msg);
+	});
+}
 async function getGamesData()
 {
 	var gamesList = document.getElementById("gamesList");
@@ -19,6 +60,8 @@ async function getGamesData()
 			var title = gameData._embedded.product.title;
 			var imgUrl = gameData._embedded.product._links.image.href.replace("{formatter}", "glx_logo_2x");
 			gamesList.appendChild(createGameDiv(id, title, imgUrl));
+			// TODO: Remove this, it's just for debugging
+			break;
 		}
 	}
 	catch(e)
@@ -26,53 +69,19 @@ async function getGamesData()
 		debugger;
 	}
 }
-var cheerpOSFds = [];
-async function cheerpOSOpenWrapper(path, mode)
-{
-	return new Promise(function(resolve, reject)
-	{
-		cheerpOSOpen(cheerpOSFds, path, mode, resolve);
-	});
-}
-async function cheerpOSWriteWrapper(fd, buf, off, len)
-{
-	return new Promise(function(resolve, reject)
-	{
-		cheerpOSWrite(cheerpOSFds, fd, buf, off, len, resolve)
-	});
-}
-async function cheerpOSCloseWrapper(fd)
-{
-	return cheerpOSClose(cheerpOSFds, fd);
-}
-async function downloadInstaller(url, cheerpOSPath)
-{
-	var fd = await cheerpOSOpenWrapper(cheerpOSPath, "w");
-	var response = await fetch(url);
-	var fileLengthStr = response.headers.get("Content-Length");
-	var fileLength = -1;
-	if(fileLengthStr)
-		fileLength = parseInt(fileLengthStr);
-	var reader = response.body.getReader();
-	while(1)
-	{
-		var data = await reader.read();
-		if(data.done)
-			break;
-		var tmp = new Int8Array(data.value);
-		await cheerpOSWriteWrapper(fd, tmp, 0, tmp.length);
-	}
-	cheerpOSCloseWrapper(fd);
-}
 async function handleGameStart(ev)
 {
 	var id = ev.currentTarget.getAttribute("data-id");
-	var r = await fetch(`https://www.gog.com/account/gameDetails/${id}.json`);
-	var d = await r.json();
-	// TODO: How to parse this structure
-	var winInstallerUrl = d.downloads[0][1].windows[0].manualUrl;
-	await downloadInstaller("https://www.gog.com" + winInstallerUrl, "/files/installer.exe");
-	debugger;
+	if(localStorage.getItem(id))
+	{
+		// TODO: Use cached instructions and image
+		debugger;
+	}
+	var statusMessage = document.getElementById("statusMessage");
+	statusMessage.textContent = "Installing the game";
+	await initCheerpXLinux();
+	await sendMessageAndWaitReply(cxLinuxPort, {type: "install", gameId: id});
+debugger;
 }
 function createGameDiv(id, title, imgUrl)
 {
@@ -88,19 +97,25 @@ function createGameDiv(id, title, imgUrl)
 	d.appendChild(t);
 	return d;
 }
-async function initCheerpX()
+async function initCheerpXLinux()
 {
-	var cx = await CheerpXSystem.create();
+	return new Promise(function(f, r)
+	{
+		var i = document.createElement("iframe");
+		i.onload = function()
+		{
+			var responseId = allocatePendingMessageId(f);
+			i.contentWindow.postMessage({type: "port", port: cxLinuxChannel.port2, responseId: responseId}, "*", [cxLinuxChannel.port2]);
+		};
+		i.src = "/cxlinux.html"
+		i.style.display = "none";
+		document.body.appendChild(i);
+	});
 }
 async function init(){
 	var statusMessage = document.getElementById("statusMessage");
-	statusMessage.textContent = "Initializing CheerpX";
-	var sandboxInitPromise = initCheerpX();
-	var gamesDataPromise = getGamesData();
-	// We expect the VM to be initialized first
-	await sandboxInitPromise;
 	statusMessage.textContent = "Loading games";
-	await gamesDataPromise;
+	var gamesData = await getGamesData();
 	statusMessage.textContent = "Click on a game to play";
 	var loading = document.getElementById("spinner");
 	loading.style.display = "none";
