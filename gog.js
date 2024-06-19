@@ -1,8 +1,12 @@
 var pendingMessages = [];
+// TODO: Get rid of these globals
 var cxLinuxChannel = new MessageChannel();
 var cxLinuxPort = cxLinuxChannel.port1;
-cxLinuxPort.onmessage = cxLinuxMsg;
-function cxLinuxMsg(m)
+cxLinuxPort.onmessage = cxMsg;
+var cxFullSysChannel = new MessageChannel();
+var cxFullSysPort = cxFullSysChannel.port1;
+cxFullSysPort.onmessage = cxMsg;
+function cxMsg(m)
 {
 	var data = m.data;
 	if(data.type == "response")
@@ -60,8 +64,6 @@ async function getGamesData()
 			var title = gameData._embedded.product.title;
 			var imgUrl = gameData._embedded.product._links.image.href.replace("{formatter}", "glx_logo_2x");
 			gamesList.appendChild(createGameDiv(id, title, imgUrl));
-			// TODO: Remove this, it's just for debugging
-			break;
 		}
 	}
 	catch(e)
@@ -72,15 +74,22 @@ async function getGamesData()
 async function handleGameStart(ev)
 {
 	var id = ev.currentTarget.getAttribute("data-id");
-	if(localStorage.getItem(id))
+	var gameConfig = localStorage.getItem(id);
+	if(gameConfig == null)
 	{
-		// TODO: Use cached instructions and image
-		debugger;
+		var statusMessage = document.getElementById("statusMessage");
+		statusMessage.textContent = "Installing the game";
+		await initCheerpXLinux();
+		gameConfig = await sendMessageAndWaitReply(cxLinuxPort, {type: "install", gameId: id});
+		// TODO: Remove Linux mode iframe
+		localStorage.setItem(id, JSON.stringify(gameConfig));
 	}
-	var statusMessage = document.getElementById("statusMessage");
-	statusMessage.textContent = "Installing the game";
-	await initCheerpXLinux();
-	await sendMessageAndWaitReply(cxLinuxPort, {type: "install", gameId: id});
+	else
+	{
+		gameConfig = JSON.parse(gameConfig);
+	}
+	await initCheerpXFullSys();
+	await sendMessageAndWaitReply(cxFullSysPort, {type: "start", gameConfig: gameConfig});
 debugger;
 }
 function createGameDiv(id, title, imgUrl)
@@ -109,6 +118,21 @@ async function initCheerpXLinux()
 		};
 		i.src = "/cxlinux.html"
 		i.style.display = "none";
+		document.body.appendChild(i);
+	});
+}
+async function initCheerpXFullSys()
+{
+	return new Promise(function(f, r)
+	{
+		var i = document.createElement("iframe");
+		i.id = "cxfullsys";
+		i.onload = function()
+		{
+			var responseId = allocatePendingMessageId(f);
+			i.contentWindow.postMessage({type: "port", port: cxFullSysChannel.port2, responseId: responseId}, "*", [cxFullSysChannel.port2]);
+		};
+		i.src = "/cxfullsys.html"
 		document.body.appendChild(i);
 	});
 }
