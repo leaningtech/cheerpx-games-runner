@@ -6,13 +6,29 @@ basePath = Path(sys.argv[1]);
 mcopyImagePath = sys.argv[2];
 autoexecOut = open(sys.argv[3], "w");
 
-# Find the *_single.conf file
+# Find the *_single.conf file, depending on the game it might be in app/ or in the top-level directory
 # TODO: Consider parsing the .info file to get all config files
-configFile = None;
-for item in basePath.iterdir():
-	if item.name.endswith("_single.conf"):
-		configFile = item.open("r");
-		break;
+def findConfigFile(path):
+	for item in path.iterdir():
+		if item.is_dir():
+			ret = findConfigFile(item);
+			if ret != None:
+				return ret;
+		elif item.name.endswith("_single.conf"):
+			return item.open("r");
+
+def findDOSBOXPath(path):
+	for item in path.iterdir():
+		if item.name == "DOSBOX":
+			return item.absolute();
+		elif item.is_dir():
+			ret = findDOSBOXPath(item);
+			if ret != None:
+				return ret;
+
+configFile = findConfigFile(basePath);
+# TODO: Use .info file to get the working dir
+dosboxPath = findDOSBOXPath(basePath);
 
 # TODO: Report error on config file not found
 
@@ -50,7 +66,7 @@ for l in autoexecLines:
 		# TODO: What to do with the disk? For now we always create a second disk image
 		relPath = parts[2].strip("\"");
 		# TODO: Use .info file to get the working dir, for now assume DOSBOX
-		copyPath = basePath / "DOSBOX" / relPath;
+		copyPath = dosboxPath / relPath;
 		# TODO: Support recursive directory copies
 		for item in copyPath.iterdir():
 			if not item.is_file():

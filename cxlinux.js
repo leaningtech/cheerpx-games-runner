@@ -89,7 +89,7 @@ async function handleMessage(m)
 			debugger;
 		sendStatus("Copying game data");
 		// Use a python script to parse the configuration and copy the right files
-		var ret = await cx.run("/usr/bin/python3", ["/files/autoexec_parse.py", `/files/${gameId}/app`, `/files/${gameId}_d.img@@1048576`, "/tmp/autoexec.bat"]);
+		var ret = await cx.run("/usr/bin/python3", ["/files/autoexec_parse.py", `/files/${gameId}`, `/files/${gameId}_d.img@@1048576`, "/tmp/autoexec.bat"]);
 		if(ret != 0)
 			debugger;
 		// We need a customized copy of the DOS setup for the custom autoexec
