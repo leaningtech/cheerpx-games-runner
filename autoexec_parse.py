@@ -64,8 +64,16 @@ for l in autoexecLines:
 		writeToAutoexec("d:");
 	elif parts[0] == "mount":
 		# TODO: What to do with the disk? For now we always create a second disk image
-		relPath = parts[2].strip("\"");
-		# TODO: Use .info file to get the working dir, for now assume DOSBOX
+		relPath = parts[2].strip("\"").replace("\\", "/");
+		mountType = None;
+		for arg in range(3, len(parts)):
+			if parts[arg] == "-t":
+				assert(arg + 1 < len(parts));
+				mountType = parts[arg + 1];
+				break;
+		if mountType == "overlay":
+			print("Skipping overlay %s" % relPath);
+			continue;
 		copyPath = dosboxPath / relPath;
 		# TODO: Support recursive directory copies
 		for item in copyPath.iterdir():
