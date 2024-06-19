@@ -53,7 +53,7 @@ def writeToAutoexec(l):
 	print(l);
 	autoexecOut.write(l + "\n");
 
-print("Generarting autoexec.bat");
+print("Generating autoexec.bat");
 for l in autoexecLines:
 	parts = l.split(" ");
 	if len(parts[0]) > 0 and parts[0][0] == "@":
