@@ -7,12 +7,20 @@
     <script src="gog.js"></script>
   </head>
   <body>
-    <div id="gamesList" title="Click a game to play">
-    </div>
-    <div>
+    <div class="vcenter">
       <h1 id="statusMessage"></h1>
       <div id="spinner">
         <img src="assets/spinner.svg" alt="Please wait" width="300"/>
+      </div>
+    </div>
+    <div>
+      <div id="gamesList" class="itemList" title="Click a game to play">
+      </div>
+      <div id="storeList" class="itemList vcenter hidden" title="Click to login">
+        <div data-link="https://www.gog.com/en/##openlogin">
+          <img src="gogassets/logo.png"></img>
+          <span>GOG.com</span>
+        </div>
       </div>
     </div>
   </body>

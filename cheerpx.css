@@ -22,43 +22,50 @@ body > div
         flex-direction: column;
         justify-content: space-between;
         width: 50%;
+	height: 100%;
+	overflow-y: auto;
 }
 
-div#gamesList
+div.itemList
 {
         display: flex;
         align-items: center;
         flex-direction: column;
         justify-content: flex-start;
-	height: 100%;
-	overflow-y: auto;
+	width: 100%;
 	cursor: pointer;
 }
 
-div#gamesList > div
+div.itemList > div
 {
         display: flex;
         align-items: center;
 	width: 100%;
 	font-size: xx-large;
+	height: 100px;
 }
 
-div#gamesList > div:hover
+div.itemList > div:hover
 {
 	background: gray;
 }
 
-div#gamesList > div > img
+div.itemList > div > img
 {
-	width: 150px;
 	margin-right: 20px;
+	height: 100%;
 }
 
-div#gamesList > div > span
+div.itemList > div > span
 {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
+}
+
+div.vcenter
+{
+	justify-content: center;
 }
 
 iframe#cxfullsys
@@ -67,4 +74,9 @@ iframe#cxfullsys
 	width: 100%;
 	height: 100%;
 	margin: 20px;
+}
+
+div.hidden
+{
+	display: none;
 }

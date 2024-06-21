@@ -46,11 +46,13 @@ async function sendMessageAndWaitReply(port, msg)
 async function getGamesData()
 {
 	var gamesList = document.getElementById("gamesList");
-	// TODO: Cache data and only update new entries in licenses
+	// TODO: Cache data and only update new entries in licences
 	try
 	{
 		// Get the list of all purchased games
 		var r = await fetch("https://menu.gog.com/v1/account/licences", { credentials: "include" });
+		if(r.status == 401)
+			return false;
 		var licenses = await r.json();
 		for(var i=0;i<licenses.length;i++)
 		{
@@ -70,10 +72,18 @@ async function getGamesData()
 	{
 		debugger;
 	}
+	return true;
+}
+function getAttributeFromAncestor(elem, attr)
+{
+	var ret = null;
+	while((ret = elem.getAttribute(attr)) == null)
+		elem = elem.parentElement;
+	return ret;
 }
 async function handleGameStart(ev)
 {
-	var id = ev.currentTarget.getAttribute("data-id");
+	var id = getAttributeFromAncestor(ev.target, "data-id");
 	var gameConfig = localStorage.getItem(id);
 	if(gameConfig == null)
 	{
@@ -92,11 +102,15 @@ async function handleGameStart(ev)
 	await sendMessageAndWaitReply(cxFullSysPort, {type: "start", gameConfig: gameConfig});
 debugger;
 }
+function handleStoreLogin(ev)
+{
+	var link = getAttributeFromAncestor(ev.target, "data-link");
+	window.open(link, "_blank");
+}
 function createGameDiv(id, title, imgUrl)
 {
 	var d = document.createElement("div");
 	d.setAttribute("data-id", id);
-	d.addEventListener("click", handleGameStart);
 	var i = document.createElement("img");
 	// Add a prefix to allow interception by service worker
 	i.src = "@" + imgUrl;
@@ -139,8 +153,19 @@ async function initCheerpXFullSys()
 async function init(){
 	var statusMessage = document.getElementById("statusMessage");
 	statusMessage.textContent = "Loading games";
-	var gamesData = await getGamesData();
-	statusMessage.textContent = "Click on a game to play";
+	var gamesList = document.getElementById("gamesList");
+	gamesList.addEventListener("click", handleGameStart);
+	var storeList = document.getElementById("storeList");
+	storeList.addEventListener("click", handleStoreLogin);
+	var hasGamesData = await getGamesData();
+	if(hasGamesData)
+		statusMessage.textContent = "Click on a game to play";
+	else
+	{
+		statusMessage.textContent = "Reload page after logging in";
+		storeList.classList.remove("hidden");
+		gamesList.classList.add("hidden");
+	}
 	var loading = document.getElementById("spinner");
 	loading.style.display = "none";
 }
