@@ -29,7 +29,6 @@ function createGameDiv(id, title, imgUrl)
 	var d = document.createElement("div");
 	d.setAttribute("data-id", id);
 	d.classList.add("game");
-	d.classList.add("clickable");
 	if(this.isClickable)
 		d.classList.add("clickable");
 	else
