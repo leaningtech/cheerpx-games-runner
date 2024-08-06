@@ -102,6 +102,8 @@ async function getGamesData(gamesList)
 			try
 			{
 				var gameData = await r.json();
+				if(gameData._embedded.productType != "GAME")
+					continue;
 				// Save the information we need for this game
 				var title = gameData._embedded.product.title;
 				var imgUrl = gameData._embedded.product._links.image.href.replace("{formatter}", "glx_logo_2x");
