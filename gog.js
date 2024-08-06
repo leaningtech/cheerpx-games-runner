@@ -9,6 +9,7 @@ cxFullSysPort.onmessage = cxMsg;
 var supportedGamesList = null;
 var freeGamesList = null;
 var unsupportedGamesList = null;
+var stopLoading = false;
 function GamesList(parent, title, tooltip, isClickable)
 {
 	this.listDiv = document.createElement("div");
@@ -116,6 +117,8 @@ async function getGamesData(gamesList)
 				// Be robust to unexpected formats
 				console.warn(`Cannot parse data for game ${id}`);
 			}
+			if(stopLoading)
+				break;
 		}
 	}
 	catch(e)
@@ -133,6 +136,8 @@ function getAttributeFromAncestor(elem, attr)
 }
 async function handleGameStart(ev)
 {
+	// Prevent further games to be loaded
+	stopLoading = true;
 	var id = getAttributeFromAncestor(ev.target, "data-id");
 	var gameConfig = localStorage.getItem(id);
 	if(gameConfig == null)
