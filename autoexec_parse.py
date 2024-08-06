@@ -4,7 +4,7 @@ import sys;
 
 basePath = Path(sys.argv[1]);
 mcopyImagePath = sys.argv[2];
-autoexecOut = open(sys.argv[3], "w");
+autoexecOut = open(sys.argv[3], "wb");
 
 # Find the *_single.conf file, depending on the game it might be in app/ or in the top-level directory
 # TODO: Consider parsing the .info file to get all config files
@@ -15,7 +15,7 @@ def findConfigFile(path):
 			if ret != None:
 				return ret;
 		elif item.name.endswith("_single.conf"):
-			return item.open("r");
+			return item.open("rb");
 
 def findDOSBOXPath(path):
 	for item in path.iterdir():
@@ -37,11 +37,11 @@ autoexecLines = None;
 # Extract the autoexec section
 for l in configFile:
 	ls = l.strip();
-	if len(ls) > 0 and ls[0] == "#":
+	if ls.startswith(b"#"):
 		# Comment, skip
 		continue;
-	elif len(ls) > 0 and ls[0] == "[":
-		if ls == "[autoexec]":
+	elif ls.startswith(b"["):
+		if ls == b"[autoexec]":
 			autoexecLines = [];
 		elif autoexecLines != None:
 			# Another section after autoexec, stop
@@ -50,40 +50,41 @@ for l in configFile:
 		autoexecLines.append(ls);
 
 def writeToAutoexec(l):
+	# TODO: Remove debug print when the parsing is stabilized
 	print(l);
-	autoexecOut.write(l + "\n");
+	autoexecOut.write(l + b"\n");
 
 print("Generating autoexec.bat");
 for l in autoexecLines:
-	parts = l.split(" ");
-	if len(parts[0]) > 0 and parts[0][0] == "@":
+	parts = l.split(b" ");
+	if parts[0].startswith(b"@"):
 		# Skip, unsure what to do with these outside of DOSBox
 		continue;
-	elif len(parts[0]) > 0 and parts[0][-1] == ":":
+	elif parts[0].endswith(b":"):
 		# Disk switch, assume it should go to d:
-		writeToAutoexec("d:");
-	elif parts[0] == "mount":
+		writeToAutoexec(b"d:");
+	elif parts[0] == b"mount":
 		# TODO: What to do with the disk? For now we always create a second disk image
-		relPath = parts[2].strip("\"").replace("\\", "/");
+		relPath = parts[2].strip(b"\"").replace(b"\\", b"/");
 		mountType = None;
 		for arg in range(3, len(parts)):
-			if parts[arg] == "-t":
+			if parts[arg] == b"-t":
 				assert(arg + 1 < len(parts));
 				mountType = parts[arg + 1];
 				break;
-		if mountType == "overlay":
+		if mountType == b"overlay":
 			print("Skipping overlay %s" % relPath);
 			continue;
-		copyPath = dosboxPath / relPath;
+		copyPath = dosboxPath / relPath.decode("utf-8");
 		# TODO: Support recursive directory copies
 		for item in copyPath.iterdir():
 			if not item.is_file():
 				continue;
 			# Copy the file
 			subprocess.run(["mcopy", "-i", mcopyImagePath, "-v", item.absolute(), "::"]);
-	elif parts[0] == "exit":
+	elif parts[0] == b"exit":
 		# Convert to a reboot, we can better handle that in the VM
-		writeToAutoexec("shutdown /r /t 0");
+		writeToAutoexec(b"shutdown /r /t 0");
 	else:
 		# Anything else is just copied verbatim
 		writeToAutoexec(l);
