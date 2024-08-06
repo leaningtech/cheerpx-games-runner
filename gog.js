@@ -145,10 +145,10 @@ async function handleGameStart(ev)
 	{
 		var statusMessage = document.getElementById("statusMessage");
 		statusMessage.textContent = "Installing the game";
-		await initCheerpXLinux();
+		linuxIframe = await initCheerpXLinux();
 		gameConfig = await sendMessageAndWaitReply(cxLinuxPort, {type: "install", gameId: id});
-		// TODO: Remove Linux mode iframe
 		localStorage.setItem(id, JSON.stringify(gameConfig));
+		linuxIframe.remove();
 	}
 	else
 	{
@@ -176,6 +176,7 @@ async function initCheerpXLinux()
 		i.src = "/cxlinux.html"
 		i.style.display = "none";
 		document.body.appendChild(i);
+		f(i);
 	});
 }
 async function initCheerpXFullSys()
