@@ -123,7 +123,7 @@ async function handleMessage(m)
 		if(ret != 0)
 			debugger;
 		sendStatus("Cleaning up");
-		var ret = await cx.run("/bin/rm", ["-rf", `/files/${gameId}/`, "files/installer.exe", "/tmp/FDCONFIG.SYS", "/tmp/FDAUTO.BAT", "/tmp/FDAUTO.NEW.BAT"]);
+		var ret = await cx.run("/bin/rm", ["-rf", `/files/${gameId}/`, "/files/installer.exe", "/tmp/FDCONFIG.SYS", "/tmp/FDAUTO.BAT", "/tmp/FDAUTO.NEW.BAT"]);
 		if(ret != 0)
 			debugger;
 		// TODO: Build autoexec
