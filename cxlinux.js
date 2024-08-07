@@ -126,7 +126,7 @@ async function handleMessage(m)
 		var ret = await cx.run("/bin/rm", ["-rf", `/files/${gameId}/`, "/files/installer.exe", "/tmp/FDCONFIG.SYS", "/tmp/FDAUTO.BAT", "/tmp/FDAUTO.NEW.BAT"]);
 		if(ret != 0)
 			debugger;
-		// TODO: Build autoexec
+		await cx.flushIO();
 		port.postMessage({type: "response", responseId: data.responseId, value: {dosImage: `/files/${gameId}_c.img`, gameImage: `/files/${gameId}_d.img`}});
 	}
 	else
