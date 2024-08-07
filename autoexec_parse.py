@@ -76,12 +76,9 @@ for l in autoexecLines:
 			print("Skipping overlay %s" % relPath);
 			continue;
 		copyPath = dosboxPath / relPath.decode("utf-8");
-		# TODO: Support recursive directory copies
 		for item in copyPath.iterdir():
-			if not item.is_file():
-				continue;
-			# Copy the file
-			subprocess.run(["mcopy", "-i", mcopyImagePath, "-v", item.absolute(), "::"]);
+			# Copy the file or directory
+			subprocess.run(["mcopy", "-i", mcopyImagePath, "-s", "-v", item.absolute(), "::"]);
 	elif parts[0] == b"exit":
 		# Convert to a reboot, we can better handle that in the VM
 		writeToAutoexec(b"shutdown /r /t 0");
