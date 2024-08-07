@@ -170,13 +170,15 @@ async function initCheerpXLinux()
 		var i = document.createElement("iframe");
 		i.onload = function()
 		{
-			var responseId = allocatePendingMessageId(f);
+			var responseId = allocatePendingMessageId(function()
+			{
+				f(i);
+			});
 			i.contentWindow.postMessage({type: "port", port: cxLinuxChannel.port2, responseId: responseId}, "*", [cxLinuxChannel.port2]);
 		};
 		i.src = "/cxlinux.html"
 		i.style.display = "none";
 		document.body.appendChild(i);
-		f(i);
 	});
 }
 async function initCheerpXFullSys()
