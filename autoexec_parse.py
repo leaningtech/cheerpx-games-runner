@@ -83,6 +83,7 @@ for l in autoexecLines:
 		# Convert to a reboot, we can better handle that in the VM
 		# NOTE: Temporarily disabled to simplify debugging
 		#writeToAutoexec(b"fdisk /reboot");
+		writeToAutoexec(b"");
 	else:
 		# Anything else is just copied verbatim
 		writeToAutoexec(l);
