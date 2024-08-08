@@ -51,7 +51,7 @@ async function handleMessage(m)
 		port = data.port;
 		port.onmessage = handleMessage;
 		await CheerpXApp.promise;
-		cx = await CheerpXApp.create({devices:[{type:"block",url:"https://disks.webvm.io/debian_run_games.ext2",name:"block1"}],mounts:[{type:"ext2",dev:"block1",path:"/"},{type:"cheerpOS",dev:"/files",path:"/files"},{type:"devs",dev:"",path:"/dev"}]});
+		cx = await CheerpXApp.create({devices:[{type:"block",url:"https://disks.webvm.io/debian_cxgr_20240807.ext2",name:"block1"}],mounts:[{type:"ext2",dev:"block1",path:"/"},{type:"cheerpOS",dev:"/files",path:"/files"},{type:"devs",dev:"",path:"/dev"}]});
 		sendStatus("CheerpX ready");
 		port.postMessage({type: "response", responseId: data.responseId, value: null});
 	}
