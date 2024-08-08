@@ -81,7 +81,8 @@ for l in autoexecLines:
 			subprocess.run(["mcopy", "-i", mcopyImagePath, "-s", "-v", item.absolute(), "::"]);
 	elif parts[0] == b"exit":
 		# Convert to a reboot, we can better handle that in the VM
-		writeToAutoexec(b"shutdown /r /t 0");
+		# NOTE: Temporarily disabled to simplify debugging
+		#writeToAutoexec(b"fdisk /reboot");
 	else:
 		# Anything else is just copied verbatim
 		writeToAutoexec(l);
