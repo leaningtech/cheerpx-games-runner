@@ -50,4 +50,4 @@ If you want to build a product on top of CheerpX, please get in touch: sales@lea
 
 ## Contact
 
-For any queries or suggestions, feel free to contact us at [email@example.com](mailto:email@example.com).
+For any queries or suggestions, feel free to contact on [Discord](https://discord.gg/yTNZgySKGa).
