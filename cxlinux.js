@@ -100,7 +100,7 @@ async function handleMessage(m)
 		var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDCONFIG.SYS", "/tmp/FDCONFIG.SYS"]);
 		if(ret != 0)
 			debugger;
-		var ret = await cx.run("/bin/sed", ["-i", "s/MENUDEFAULT=2,5/MENUDEFAULT=5,0/", "/tmp/FDCONFIG.SYS"]);
+		var ret = await cx.run("/bin/sed", ["-i", "s/MENUDEFAULT=2,5/MENUDEFAULT=4,0/", "/tmp/FDCONFIG.SYS"]);
 		if(ret != 0)
 			debugger;
 		var ret = await cx.run("/usr/bin/mdel", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDCONFIG.SYS"]);
