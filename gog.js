@@ -147,8 +147,17 @@ async function handleGameStart(ev)
 		statusMessage.textContent = "Installing the game";
 		linuxIframe = await initCheerpXLinux();
 		gameConfig = await sendMessageAndWaitReply(cxLinuxPort, {type: "install", gameId: id});
-		localStorage.setItem(id, JSON.stringify(gameConfig));
 		linuxIframe.remove();
+		if(gameConfig == null)
+		{
+			statusMessage.textContent = "Installation failure, please report a bug";
+			// TODO: Allow the user to retry and reload games
+			return;
+		}
+		else
+		{
+			localStorage.setItem(id, JSON.stringify(gameConfig));
+		}
 	}
 	else
 	{
