@@ -43,6 +43,12 @@ function sendStatus(status)
 {
 	port.postMessage({type: "status", status: status});
 }
+var consoleDecoder = new TextDecoder('utf-8');
+function consoleWrite(buf)
+{
+	// Decode and print the output to stdout
+	console.log(consoleDecoder.decode(buf));
+}
 async function handleMessage(m)
 {
 	var data = m.data;
@@ -57,6 +63,11 @@ async function handleMessage(m)
 	}
 	else if(data.type == "install")
 	{
+		// Initialize the custom console
+		var cxReadFunc = cx.setCustomConsole(consoleWrite, 80, 24);
+		// We need to inject a single "q\n" to make sure mcopy do not ever hang on duplicated filenames
+		cxReadFunc(113);
+		cxReadFunc(10);
 		var gameId = data.gameId;
 		var r = await fetch(`https://www.gog.com/account/gameDetails/${gameId}.json`);
 		var d = await r.json();
