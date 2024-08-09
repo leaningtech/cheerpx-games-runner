@@ -63,7 +63,8 @@ async function handleMessage(m)
 	}
 	else if(data.type == "install")
 	{
-		var success = await installGame(data.gameId);
+		var gameId = data.gameId;
+		var success = await installGame(gameId);
 		// An empty response encodes a failure
 		port.postMessage({type: "response", responseId: data.responseId, value: success ? {dosImage: `/files/${gameId}_c.img`, gameImage: `/files/${gameId}_d.img`} : null});
 	}
