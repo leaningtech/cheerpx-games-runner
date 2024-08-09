@@ -78,7 +78,10 @@ for l in autoexecLines:
 		copyPath = dosboxPath / relPath.decode("utf-8");
 		for item in copyPath.iterdir():
 			# Copy the file or directory
-			subprocess.run(["mcopy", "-i", mcopyImagePath, "-s", "-v", item.absolute(), "::"]);
+			result = subprocess.run(["mcopy", "-i", mcopyImagePath, "-s", "-v", item.absolute(), "::"]);
+			if result.returncode != 0:
+				# Propagate the failure
+				exit(result.returncode);
 	elif parts[0] == b"exit":
 		# Convert to a reboot, we can better handle that in the VM
 		# NOTE: Temporarily disabled to simplify debugging
