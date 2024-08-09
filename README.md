@@ -1,6 +1,6 @@
 # CheerpX Games Runner Chrome Extension
 
-[![Discord server](https://img.shields.io/discord/988743885121548329?color=%235865F2&logo=discord&logoColor=%23fff)](https://discord.gg/yTNZgySKGa)
+[![Discord server](https://img.shields.io/discord/988743885121548329?color=%235865F2&logo=discord&logoColor=%23fff)](https://discord.gg/9AP4b9VTXN)
 [![Issues](https://img.shields.io/github/issues/leaningtech/cheerpx-games-runner)](https://github.com/leaningtech/cheerpx-games-runner/issues)
 
 ## Overview
@@ -36,7 +36,7 @@ support for modern games is also planned in the future.
 # Bugs and Issues
 
 Please use [Issues](https://github.com/leaningtech/cheerpx-games-runner/issues) to report any bug.
-Or come to say hello / share your feedback on [Discord](https://discord.gg/yTNZgySKGa).
+Or come to say hello / share your feedback on [Discord](https://discord.gg/9AP4b9VTXN).
 
 ## License
 
@@ -50,4 +50,4 @@ If you want to build a product on top of CheerpX, please get in touch: sales@lea
 
 ## Contact
 
-For any queries or suggestions, feel free to contact on [Discord](https://discord.gg/yTNZgySKGa).
+For any queries or suggestions, feel free to contact on [Discord](https://discord.gg/9AP4b9VTXN).
