@@ -60,11 +60,8 @@ for l in autoexecLines:
 	if parts[0].startswith(b"@"):
 		# Skip, unsure what to do with these outside of DOSBox
 		continue;
-	elif parts[0].endswith(b":"):
-		# Disk switch, assume it should go to d:
-		writeToAutoexec(b"d:");
 	elif parts[0] == b"mount":
-		# TODO: What to do with the disk? For now we always create a second disk image
+		# TODO: Check disk id, for now we always copy everything to the main disk
 		relPath = parts[2].strip(b"\"").replace(b"\\", b"/");
 		mountType = None;
 		for arg in range(3, len(parts)):

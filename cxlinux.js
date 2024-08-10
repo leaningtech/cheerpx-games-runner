@@ -66,7 +66,7 @@ async function handleMessage(m)
 		var gameId = data.gameId;
 		var success = await installGame(gameId);
 		// An empty response encodes a failure
-		port.postMessage({type: "response", responseId: data.responseId, value: success ? {dosImage: `/files/${gameId}_c.img`, gameImage: `/files/${gameId}_d.img`} : null});
+		port.postMessage({type: "response", responseId: data.responseId, value: success ? {dosImage: `/files/${gameId}_c.img`} : null});
 	}
 	else
 	{
@@ -96,29 +96,16 @@ async function installGame(gameId)
 	var ret = await cx.run("/usr/bin/innoextract", ["-m", "-d", `/files/${gameId}/`, "/files/installer.exe"]);
 	if(ret != 0)
 		return false;
-	sendStatus("Formatting image");
-	// TODO: Support /dev/zero in CheerpX
-	// Create an empty image 20% larger than the strictly required size
-	var ret = await cx.run("/bin/bash", ["-c", `dd if=/dev/urandom of=/files/${gameId}_d.img bs=1M count=$((\`du --apparent-size -sm /files/${gameId}/ | cut -f 1\` * 12 / 10))`]);
-	if(ret != 0)
-		return false;
-	var ret = await cx.run("/bin/bash", ["-c", `echo -e "n\\np\\n1\\n\\n\\nt\\n6\\nw" | /sbin/fdisk /files/${gameId}_d.img`]);
-	if(ret != 0)
-		return false;
-	// Format the partition inside the image, assume the starting point is always 1M / 2048 sectors
-	var ret = await cx.run("/usr/bin/mformat", ["-i", `/files/${gameId}_d.img@@1048576`]);
-	if(ret != 0)
-		return false;
 	sendStatus("Copying game data");
+	// Edit the standard FreeDOS setup to immediately start in safe mode
+	// NOTE: FreeDOS uses a traditional 63 sector start location
+	var freedosStart = 63 * 512;
 	// Use a python script to parse the configuration and copy the right files
-	var ret = await cx.run("/usr/bin/python3", ["/files/autoexec_parse.py", `/files/${gameId}`, `/files/${gameId}_d.img@@1048576`, "/tmp/autoexec.bat"]);
+	var ret = await cx.run("/usr/bin/python3", ["/files/autoexec_parse.py", `/files/${gameId}`, `/files/${gameId}_c.img@@${freedosStart}`, "/tmp/autoexec.bat"]);
 	if(ret != 0)
 		return false;
 	// We need a customized copy of the DOS setup for the custom autoexec
 	sendStatus("Setting up DOS");
-	// Edit the standard FreeDOS setup to immediately start in safe mode
-	// NOTE: FreeDOS uses a traditional 63 sector start location
-	var freedosStart = 63 * 512;
 	var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDCONFIG.SYS", "/tmp/FDCONFIG.SYS"]);
 	if(ret != 0)
 		return false;
