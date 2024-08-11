@@ -96,6 +96,13 @@ async function installGame(gameId)
 	var ret = await cx.run("/usr/bin/innoextract", ["-m", "-d", `/files/${gameId}/`, "/files/installer.exe"]);
 	if(ret != 0)
 		return false;
+	// This copy seems to be hardcoded, even if there are mechanisms such as the game script that would support this copy
+	if(await cx.run("/usr/bin/test", ["-d", `/files/${gameId}/__support/save/`]) == 0)
+	{
+		var ret = await cx.run("/bin/cp", ["-rv", `/files/${gameId}/__support/save/.`, `/files/${gameId}`]);
+		if(ret != 0)
+			return false;
+	}
 	sendStatus("Copying game data");
 	// Edit the standard FreeDOS setup to immediately start in safe mode
 	// NOTE: FreeDOS uses a traditional 63 sector start location
