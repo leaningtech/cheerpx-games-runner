@@ -61,7 +61,9 @@ for l in autoexecLines:
 		# Skip, unsure what to do with these outside of DOSBox
 		continue;
 	elif parts[0] == b"mount":
-		# TODO: Check disk id, for now we always copy everything to the main disk
+		if parts[1].lower() != b"c":
+			print("Skipping disk %s:" % parts[1].decode("utf-8"));
+			continue;
 		relPath = parts[2].strip(b"\"").replace(b"\\", b"/");
 		mountType = None;
 		for arg in range(3, len(parts)):
