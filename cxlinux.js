@@ -142,7 +142,10 @@ async function installGame(gameId)
 	var ret = await cx.run("/bin/rm", ["-rf", `/files/${gameId}/`, "/files/installer.exe", "/tmp/FDCONFIG.SYS", "/tmp/FDAUTO.BAT", "/tmp/FDAUTO.NEW.BAT"]);
 	if(ret != 0)
 		return null;
+	var cdImage = null;
+	if(await cx.run("/usr/bin/test", ["-f", `/files/${gameId}_d.iso`]) == 0)
+		cdImage = `/files/${gameId}_d.iso`;
 	await cx.flushIO();
-	return {dosImage: `/files/${gameId}_c.img`};
+	return {dosImage: `/files/${gameId}_c.img`, cdImage: cdImage};
 }
 addEventListener("message", handleMessage);

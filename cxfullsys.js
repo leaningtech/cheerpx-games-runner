@@ -14,7 +14,7 @@ async function handleMessage(m)
 	else if(data.type == "start")
 	{
 		var gameConfig = data.gameConfig;
-		cx.run(/*MhZ*/20, {mem:64, bios:"/files/bios.bin", vgaBios:"/files/vgabios-stdvga.bin", disk:gameConfig.dosImage});
+		cx.run(/*MhZ*/20, {mem:64, bios:"/files/bios.bin", vgaBios:"/files/vgabios-stdvga.bin", disk:gameConfig.dosImage, cd:gameConfig.cdImage});
 	}
 	else
 	{

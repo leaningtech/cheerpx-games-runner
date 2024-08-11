@@ -81,6 +81,17 @@ for l in autoexecLines:
 			if result.returncode != 0:
 				# Propagate the failure
 				exit(result.returncode);
+	elif parts[0] == b"imgmount":
+		# Assume this is used for CD images
+		if parts[1].lower() != b"d":
+			print("Skipping image for d %s:" % parts[1].decode("utf-8"));
+			continue;
+		relPath = parts[2].strip(b"\"").replace(b"\\", b"/");
+		copyPath = dosboxPath / relPath.decode("utf-8");
+		result = subprocess.run(["cp", "-v", copyPath, basePath.as_posix() + "_d.iso"]);
+		if result.returncode != 0:
+			# Propagate the failure
+			exit(result.returncode);
 	elif parts[0] == b"exit":
 		# Convert to a reboot, we can better handle that in the VM
 		# NOTE: Temporarily disabled to simplify debugging
