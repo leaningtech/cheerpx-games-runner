@@ -64,9 +64,9 @@ async function handleMessage(m)
 	else if(data.type == "install")
 	{
 		var gameId = data.gameId;
-		var success = await installGame(gameId);
+		var gameConfig = await installGame(gameId);
 		// An empty response encodes a failure
-		port.postMessage({type: "response", responseId: data.responseId, value: success ? {dosImage: `/files/${gameId}_c.img`} : null});
+		port.postMessage({type: "response", responseId: data.responseId, value: gameConfig});
 	}
 	else
 	{
@@ -95,13 +95,13 @@ async function installGame(gameId)
 	sendStatus("Extracting game data");
 	var ret = await cx.run("/usr/bin/innoextract", ["-m", "-d", `/files/${gameId}/`, "/files/installer.exe"]);
 	if(ret != 0)
-		return false;
+		return null;
 	// This copy seems to be hardcoded, even if there are mechanisms such as the game script that would support this copy
 	if(await cx.run("/usr/bin/test", ["-d", `/files/${gameId}/__support/save/`]) == 0)
 	{
 		var ret = await cx.run("/bin/cp", ["-rv", `/files/${gameId}/__support/save/.`, `/files/${gameId}`]);
 		if(ret != 0)
-			return false;
+			return null;
 	}
 	sendStatus("Copying game data");
 	// Edit the standard FreeDOS setup to immediately start in safe mode
@@ -110,39 +110,39 @@ async function installGame(gameId)
 	// Use a python script to parse the configuration and copy the right files
 	var ret = await cx.run("/usr/bin/python3", ["/files/autoexec_parse.py", `/files/${gameId}`, `/files/${gameId}_c.img@@${freedosStart}`, "/tmp/autoexec.bat"]);
 	if(ret != 0)
-		return false;
+		return null;
 	// We need a customized copy of the DOS setup for the custom autoexec
 	sendStatus("Setting up DOS");
 	var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDCONFIG.SYS", "/tmp/FDCONFIG.SYS"]);
 	if(ret != 0)
-		return false;
+		return null;
 	var ret = await cx.run("/bin/sed", ["-i", "s/MENUDEFAULT=2,5/MENUDEFAULT=4,0/", "/tmp/FDCONFIG.SYS"]);
 	if(ret != 0)
-		return false;
+		return null;
 	var ret = await cx.run("/usr/bin/mdel", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDCONFIG.SYS"]);
 	if(ret != 0)
-		return false;
+		return null;
 	var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "/tmp/FDCONFIG.SYS", "::FDCONFIG.SYS"]);
 	if(ret != 0)
-		return false;
+		return null;
 	// Copy generated autoexec.bat the end of original fdauto.bat
 	var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDAUTO.BAT", "/tmp/FDAUTO.BAT"]);
 	if(ret != 0)
-		return false;
+		return null;
 	var ret = await cx.run("/bin/bash", ["-c", "cat /tmp/FDAUTO.BAT /tmp/autoexec.bat > /tmp/FDAUTO.NEW.BAT"]);
 	if(ret != 0)
-		return false;
+		return null;
 	var ret = await cx.run("/usr/bin/mdel", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDAUTO.BAT"]);
 	if(ret != 0)
-		return false;
+		return null;
 	var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "/tmp/FDAUTO.NEW.BAT", "::FDAUTO.BAT"]);
 	if(ret != 0)
-		return false;
+		return null;
 	sendStatus("Cleaning up");
 	var ret = await cx.run("/bin/rm", ["-rf", `/files/${gameId}/`, "/files/installer.exe", "/tmp/FDCONFIG.SYS", "/tmp/FDAUTO.BAT", "/tmp/FDAUTO.NEW.BAT"]);
 	if(ret != 0)
-		return false;
+		return null;
 	await cx.flushIO();
-	return true;
+	return {dosImage: `/files/${gameId}_c.img`};
 }
 addEventListener("message", handleMessage);
