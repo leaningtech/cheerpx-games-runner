@@ -130,18 +130,18 @@ async function getGamesData()
 	}
 	return true;
 }
-function getAttributeFromAncestor(elem, attr)
+function getAncestorWithAttribute(elem, attr)
 {
-	var ret = null;
-	while((ret = elem.getAttribute(attr)) == null)
+	while(elem.getAttribute(attr) == null)
 		elem = elem.parentElement;
-	return ret;
+	return elem;
 }
 async function handleGameStart(ev)
 {
 	// Prevent further games to be loaded
 	stopLoading = true;
-	var id = getAttributeFromAncestor(ev.target, "data-id");
+	var gameElem = getAncestorWithAttribute(ev.target, "data-id");
+	var id = gameElem.getAttribute("data-id");
 	var gameConfig = localStorage.getItem(id);
 	if(gameConfig == null)
 	{
@@ -171,7 +171,8 @@ debugger;
 }
 function handleLinkElement(ev)
 {
-	var link = getAttributeFromAncestor(ev.target, "data-id");
+	var linkElem = getAncestorWithAttribute(ev.target, "data-id");
+	var link = linkElem.getAttribute("data-id");
 	window.open(link, "_blank");
 }
 async function initCheerpXLinux()
