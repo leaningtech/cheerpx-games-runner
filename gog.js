@@ -104,6 +104,8 @@ async function getGamesData()
 			try
 			{
 				var gameData = await r.json();
+				if(stopLoading)
+					break;
 				if(gameData._embedded.productType != "GAME")
 					continue;
 				// Save the information we need for this game
@@ -120,8 +122,6 @@ async function getGamesData()
 				// Be robust to unexpected formats
 				console.warn(`Cannot parse data for game ${id}`);
 			}
-			if(stopLoading)
-				break;
 		}
 	}
 	catch(e)
@@ -223,7 +223,8 @@ async function init(){
 	var hasGamesData = await getGamesData();
 	if(hasGamesData)
 	{
-		statusMessage.textContent = "Click on a game to play";
+		if(!stopLoading)
+			statusMessage.textContent = "Click on a game to play";
 	}
 	else
 	{
