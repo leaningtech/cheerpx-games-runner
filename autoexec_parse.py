@@ -76,6 +76,9 @@ for l in autoexecLines:
 			continue;
 		copyPath = dosboxPath / relPath.decode("utf-8");
 		for item in copyPath.iterdir():
+			# Do not copy the DOSBox installation, it takes a few megabytes
+			if item.samefile(dosboxPath):
+				continue;
 			# Copy the file or directory
 			result = subprocess.run(["mcopy", "-i", mcopyImagePath, "-s", "-v", item.absolute(), "::"]);
 			if result.returncode != 0:
