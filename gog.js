@@ -9,6 +9,7 @@ cxFullSysPort.onmessage = cxMsg;
 var supportedGamesList = null;
 var freeGamesList = null;
 var unsupportedGamesList = null;
+var selectedGameList = null;
 // This is the top-level div on the right-hand side
 var gamesList = null;
 var stopLoading = false;
@@ -140,7 +141,13 @@ async function handleGameStart(ev)
 {
 	// Prevent further games to be loaded
 	stopLoading = true;
+	supportedGamesList.listDiv.classList.add("hidden");
+	freeGamesList.listDiv.classList.add("hidden");
+	unsupportedGamesList.listDiv.classList.add("hidden");
+	selectedGameList.listDiv.classList.remove("hidden");
 	var gameElem = getAncestorWithAttribute(ev.target, "data-id");
+	selectedGameList.listDiv.appendChild(gameElem);
+	gamesList.classList.add("vcenter");
 	var id = gameElem.getAttribute("data-id");
 	var gameConfig = localStorage.getItem(id);
 	if(gameConfig == null)
@@ -217,6 +224,9 @@ async function init(){
 	freeGamesList.addGame("https://www.gog.com/en/games?priceRange=0,0&hideDLCs=true&releaseDateRange=1980,1999", "Free games on GOG.com", "gogassets/logo.png");
 	// The list of unsupported games, not clickable and grayed out
 	unsupportedGamesList = new GamesList(gamesList, "Unsupported games", "Not currently supported", /*isClickable*/false);
+	// This 'list' only ever contains a single game
+	selectedGameList = new GamesList(gamesList, "Selected game", "Selected game", /*isClickable*/true);
+	selectedGameList.listDiv.classList.add("hidden");
 	var statusMessage = document.getElementById("statusMessage");
 	statusMessage.textContent = "Loading games";
 	supportedGamesList.listDiv.addEventListener("click", handleGameStart);
