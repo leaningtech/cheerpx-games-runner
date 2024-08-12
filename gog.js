@@ -9,6 +9,8 @@ cxFullSysPort.onmessage = cxMsg;
 var supportedGamesList = null;
 var freeGamesList = null;
 var unsupportedGamesList = null;
+// This is the top-level div on the right-hand side
+var gamesList = null;
 var stopLoading = false;
 function GamesList(parent, title, tooltip, isClickable)
 {
@@ -82,7 +84,7 @@ async function sendMessageAndWaitReply(port, msg)
 		port.postMessage(msg);
 	});
 }
-async function getGamesData(gamesList)
+async function getGamesData()
 {
 	// TODO: Cache data and only update new entries in licences
 	try
@@ -206,7 +208,7 @@ async function initCheerpXFullSys()
 	});
 }
 async function init(){
-	var gamesList = document.getElementById("gamesList");
+	gamesList = document.getElementById("gamesList");
 	// The list of supported games, clickable
 	supportedGamesList = new GamesList(gamesList, "Supported games", "Select a game to play", /*isClickable*/true);
 	// Direct link to the free games selection for supported stores
@@ -218,7 +220,7 @@ async function init(){
 	statusMessage.textContent = "Loading games";
 	supportedGamesList.listDiv.addEventListener("click", handleGameStart);
 	freeGamesList.listDiv.addEventListener("click", handleLinkElement);
-	var hasGamesData = await getGamesData(gamesList);
+	var hasGamesData = await getGamesData();
 	if(hasGamesData)
 	{
 		statusMessage.textContent = "Click on a game to play";
