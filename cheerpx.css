@@ -45,6 +45,24 @@ div.grayed
 	color: gray;
 }
 
+div#progress
+{
+        border: none;
+        color: white;
+        border-radius: 5px;
+        background-color: rgba(0,0,0,0.2);
+        margin: 4px 2px;
+	width: 50%;
+}
+
+div#progressinner
+{
+        background-color: rgba(0,0,0,0.4);
+        height: 34px;
+        border-radius: 5px;
+        width: 0%;
+}
+
 div.itemList > div.game
 {
         display: flex;

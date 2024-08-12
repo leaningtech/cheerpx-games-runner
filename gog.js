@@ -62,6 +62,23 @@ function cxMsg(m)
 	{
 		var statusMessage = document.getElementById("statusMessage");
 		statusMessage.textContent = data.status;
+		var progressBar = document.getElementById("progress");
+		if(data.progress)
+			progressBar.classList.remove("hidden");
+		else
+			progressBar.classList.add("hidden");
+	}
+	else if(data.type == "progress")
+	{
+		if(data.total > 0)
+		{
+			var perc = Math.floor(data.value * 100 / data.total).toString() + "%";
+			document.getElementById("progressinner").style.width = perc;
+		}
+		else
+		{
+			// TODO: Support showing just the downloaded size
+		}
 	}
 	else
 	{

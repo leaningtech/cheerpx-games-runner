@@ -19,7 +19,7 @@ async function cheerpOSCloseWrapper(fd)
 {
 	return cheerpOSClose(cheerpOSFds, fd);
 }
-async function downloadInstaller(url, cheerpOSPath)
+async function downloadInstaller(url, cheerpOSPath, reportProgress)
 {
 	var fd = await cheerpOSOpenWrapper(cheerpOSPath, "w");
 	var response = await fetch(url);
@@ -28,20 +28,23 @@ async function downloadInstaller(url, cheerpOSPath)
 	if(fileLengthStr)
 		fileLength = parseInt(fileLengthStr);
 	var reader = response.body.getReader();
+	var curLength = 0;
 	while(1)
 	{
 		var data = await reader.read();
 		if(data.done)
 			break;
-		// TODO: Progress report
+		curLength += data.value.byteLength;
+		if(reportProgress)
+			port.postMessage({type: "progress", value: curLength, total:  fileLength});
 		var tmp = new Int8Array(data.value);
 		await cheerpOSWriteWrapper(fd, tmp, 0, tmp.length);
 	}
 	cheerpOSCloseWrapper(fd);
 }
-function sendStatus(status)
+function sendStatus(status, enableProgress)
 {
-	port.postMessage({type: "status", status: status});
+	port.postMessage({type: "status", status: status, progress: enableProgress});
 }
 var consoleDecoder = new TextDecoder('utf-8');
 function consoleWrite(buf)
@@ -58,7 +61,7 @@ async function handleMessage(m)
 		port.onmessage = handleMessage;
 		await CheerpXApp.promise;
 		cx = await CheerpXApp.create({devices:[{type:"block",url:"https://disks.webvm.io/debian_cxgr_20240807.ext2",name:"block1"}],mounts:[{type:"ext2",dev:"block1",path:"/"},{type:"cheerpOS",dev:"/files",path:"/files"},{type:"devs",dev:"",path:"/dev"}]});
-		sendStatus("CheerpX ready");
+		sendStatus("CheerpX ready", /*enableProgress*/false);
 		port.postMessage({type: "response", responseId: data.responseId, value: null});
 	}
 	else if(data.type == "install")
@@ -84,15 +87,15 @@ async function installGame(gameId)
 	var d = await r.json();
 	// TODO: How to parse this structure
 	var winInstallerUrl = d.downloads[0][1].windows[0].manualUrl;
-	sendStatus("Downloading installer");
-	await downloadInstaller("/autoexec_parse.py", "/files/autoexec_parse.py");
-	await downloadInstaller("https://www.gog.com" + winInstallerUrl, "/files/installer.exe");
-	sendStatus("Downloading DOS image");
-	await downloadInstaller("/freedos.img", `/files/${gameId}_c.img`);
+	sendStatus("Downloading installer", /*enableProgress*/true);
+	await downloadInstaller("/autoexec_parse.py", "/files/autoexec_parse.py", /*reportProgress*/false);
+	await downloadInstaller("https://www.gog.com" + winInstallerUrl, "/files/installer.exe", /*reportProgress*/true);
+	sendStatus("Downloading DOS image", /*enableProgress*/false);
+	await downloadInstaller("/freedos.img", `/files/${gameId}_c.img`, /*reportProgress*/false);
 	// TODO: Copy only once
-	await downloadInstaller("/bios.bin", "/files/bios.bin");
-	await downloadInstaller("/vgabios-stdvga.bin", "/files/vgabios-stdvga.bin");
-	sendStatus("Extracting game data");
+	await downloadInstaller("/bios.bin", "/files/bios.bin", /*reportProgress*/false);
+	await downloadInstaller("/vgabios-stdvga.bin", "/files/vgabios-stdvga.bin", /*reportProgress*/false);
+	sendStatus("Extracting game data", /*enableProgress*/false);
 	var ret = await cx.run("/usr/bin/innoextract", ["-m", "-d", `/files/${gameId}/`, "/files/installer.exe"]);
 	if(ret != 0)
 		return null;
@@ -103,7 +106,7 @@ async function installGame(gameId)
 		if(ret != 0)
 			return null;
 	}
-	sendStatus("Copying game data");
+	sendStatus("Copying game data", /*enableProgress*/false);
 	// Edit the standard FreeDOS setup to immediately start in safe mode
 	// NOTE: FreeDOS uses a traditional 63 sector start location
 	var freedosStart = 63 * 512;
@@ -112,7 +115,7 @@ async function installGame(gameId)
 	if(ret != 0)
 		return null;
 	// We need a customized copy of the DOS setup for the custom autoexec
-	sendStatus("Setting up DOS");
+	sendStatus("Setting up DOS", /*enableProgress*/false);
 	var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDCONFIG.SYS", "/tmp/FDCONFIG.SYS"]);
 	if(ret != 0)
 		return null;
@@ -138,7 +141,7 @@ async function installGame(gameId)
 	var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "/tmp/FDAUTO.NEW.BAT", "::FDAUTO.BAT"]);
 	if(ret != 0)
 		return null;
-	sendStatus("Cleaning up");
+	sendStatus("Cleaning up", /*enableProgress*/false);
 	var ret = await cx.run("/bin/rm", ["-rf", `/files/${gameId}/`, "/files/installer.exe", "/tmp/FDCONFIG.SYS", "/tmp/FDAUTO.BAT", "/tmp/FDAUTO.NEW.BAT"]);
 	if(ret != 0)
 		return null;
