@@ -178,7 +178,9 @@ async function handleGameStart(ev)
 		if(gameConfig == null)
 		{
 			statusMessage.textContent = "Installation failure, please report a bug";
-			// TODO: Allow the user to retry and reload games
+			var statusSmallMessage = document.getElementById("statusSmallMessage");
+			statusSmallMessage.textContent = "Reload the page to try another game";
+			statusSmallMessage.classList.remove("hidden");
 			return;
 		}
 		else
