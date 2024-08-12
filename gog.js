@@ -146,6 +146,7 @@ async function handleGameStart(ev)
 	unsupportedGamesList.listDiv.classList.add("hidden");
 	selectedGameList.listDiv.classList.remove("hidden");
 	var gameElem = getAncestorWithAttribute(ev.target, "data-id");
+	gameElem.classList.remove("clickable");
 	selectedGameList.listDiv.appendChild(gameElem);
 	gamesList.classList.add("vcenter");
 	var id = gameElem.getAttribute("data-id");
