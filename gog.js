@@ -151,18 +151,24 @@ async function getGamesData()
 function getAncestorWithAttribute(elem, attr)
 {
 	while(elem.getAttribute(attr) == null)
+	{
 		elem = elem.parentElement;
+		if(elem == null)
+			return null;
+	}
 	return elem;
 }
 async function handleGameStart(ev)
 {
+	var gameElem = getAncestorWithAttribute(ev.target, "data-id");
+	if(gameElem == null)
+		return;
 	// Prevent further games to be loaded
 	stopLoading = true;
 	supportedGamesList.listDiv.classList.add("hidden");
 	freeGamesList.listDiv.classList.add("hidden");
 	unsupportedGamesList.listDiv.classList.add("hidden");
 	selectedGameList.listDiv.classList.remove("hidden");
-	var gameElem = getAncestorWithAttribute(ev.target, "data-id");
 	gameElem.classList.remove("clickable");
 	selectedGameList.listDiv.appendChild(gameElem);
 	gamesList.classList.add("vcenter");
@@ -196,6 +202,8 @@ debugger;
 function handleLinkElement(ev)
 {
 	var linkElem = getAncestorWithAttribute(ev.target, "data-id");
+	if(linkElem == null)
+		return;
 	var link = linkElem.getAttribute("data-id");
 	window.open(link, "_blank");
 }
