@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "CheerpX Games Runner",
+  "name": "CheerpX Games Runner Beta",
   "description": "Play your games directly in the browser",
   "version": "42.42.42",
   "icons": { "128":"cheerpx128x128.png", "32":"cheerpx32x32.png" },
