@@ -177,10 +177,7 @@ async function handleGameStart(ev)
 		linuxIframe.remove();
 		if(gameConfig == null)
 		{
-			statusMessage.textContent = "Installation failure, please report a bug";
-			var statusSmallMessage = document.getElementById("statusSmallMessage");
-			statusSmallMessage.textContent = "Reload the page to try another game";
-			statusSmallMessage.classList.remove("hidden");
+			statusMessage.textContent = "Installation failure, reload the page to try another game";
 			return;
 		}
 		else
