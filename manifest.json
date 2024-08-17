@@ -11,12 +11,6 @@
   "background": {
     "service_worker": "bg.js"
   },
-  "web_accessible_resources": [
-    {
-      "resources": [ ],
-      "matches": [ "<all_urls>" ]
-    }
-  ],
   "host_permissions": [
     "https://*.gog.com/*"
   ],
