@@ -9,16 +9,16 @@ CheerpX Games Runner is an open-source Chrome Extension to run your games direct
 
 Games are populated from the personal collection of the user, by integrating  with [GOG](https://gog.com) [^1]. Other stores might be supported in the future.
 
-The extension is powered by [CheerpX](https://labs.leaningtech.com/cheerpx), a x86-to-WebAssembly virtual machine. Current it supports games running on DOS,
+The extension is powered by [CheerpX](https://labs.leaningtech.com/cheerpx), a x86-to-WebAssembly virtual machine. Currently it supports games running on DOS,
 support for modern games is also planned in the future.
 
 [^1]: Leaning Technologies is not affiliated with GOG.com in any way.
 
 ## Features
 
-- Feature 1: Play historical games from your collection directly in your browser.
-- Feature 2: Works on any platform, even if not offially supported by the game.
-- Feature 3: No local installation required.
+1. Play historical games from your collection directly in your browser.
+2. Works on any platform, even if not officially supported by the game.
+3. No local installation required.
 
 ## Installation
 
