@@ -48,6 +48,31 @@ function createGameDiv(id, title, imgUrl)
 	this.listDiv.classList.remove("hidden");
 }
 GamesList.prototype.addGame = createGameDiv;
+function showStatus(message, progressType)
+{
+	var statusMessage = document.getElementById("statusMessage");
+	statusMessage.textContent = message;
+	var progressBar = document.getElementById("progress");
+	var loading = document.getElementById("spinner");
+	switch(progressType)
+	{
+		case "none":
+			progressBar.classList.add("hidden");
+			loading.classList.add("hidden");
+			break;
+		case "progressbar":
+			progressBar.classList.remove("hidden");
+			loading.classList.add("hidden");
+			break;
+		case "spinner":
+			progressBar.classList.add("hidden");
+			loading.classList.remove("hidden");
+			break;
+		default:
+			console.warn("Unexpected progress type", data.progress);
+			break;
+	}
+}
 function cxMsg(m)
 {
 	var data = m.data;
@@ -60,13 +85,7 @@ function cxMsg(m)
 	}
 	else if(data.type == "status")
 	{
-		var statusMessage = document.getElementById("statusMessage");
-		statusMessage.textContent = data.status;
-		var progressBar = document.getElementById("progress");
-		if(data.progress)
-			progressBar.classList.remove("hidden");
-		else
-			progressBar.classList.add("hidden");
+		showStatus(data.status, data.progress);
 	}
 	else if(data.type == "progress")
 	{
@@ -176,14 +195,13 @@ async function handleGameStart(ev)
 	var gameConfig = localStorage.getItem(id);
 	if(gameConfig == null)
 	{
-		var statusMessage = document.getElementById("statusMessage");
-		statusMessage.textContent = "Installing the game";
+		showStatus("Installing the game", "none");
 		linuxIframe = await initCheerpXLinux();
 		gameConfig = await sendMessageAndWaitReply(cxLinuxPort, {type: "install", gameId: id});
 		linuxIframe.remove();
 		if(gameConfig == null)
 		{
-			statusMessage.textContent = "Installation failure, reload the page to try another game";
+			showStatus("Installation failure, reload the page to try another game", "none");
 			return;
 		}
 		else
@@ -272,6 +290,6 @@ async function init(){
 		storeList.classList.remove("hidden");
 	}
 	var loading = document.getElementById("spinner");
-	loading.style.display = "none";
+	loading.classList.add("hidden");
 }
 document.addEventListener("DOMContentLoaded", init);
