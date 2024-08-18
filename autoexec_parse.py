@@ -79,6 +79,9 @@ for l in autoexecLines:
 			# Do not copy the DOSBox installation, it takes a few megabytes
 			if item.samefile(dosboxPath):
 				continue;
+			# Do not copy CD images
+			if item.name.lower() == "game.gog":
+				continue;
 			# Copy the file or directory
 			result = subprocess.run(["mcopy", "-i", mcopyImagePath, "-s", "-v", item.absolute(), "::"]);
 			if result.returncode != 0:
