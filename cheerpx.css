@@ -63,6 +63,16 @@ div#progressinner
         width: 0%;
 }
 
+div#spinner
+{
+        height: 42px;
+}
+
+div#progressfiller
+{
+        height: 42px;
+}
+
 div.itemList > div.game
 {
         display: flex;

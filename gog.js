@@ -53,19 +53,21 @@ function showStatus(message, progressType)
 	var statusMessage = document.getElementById("statusMessage");
 	statusMessage.textContent = message;
 	var progressBar = document.getElementById("progress");
+	var progressFiller = document.getElementById("progressfiller");
 	var loading = document.getElementById("spinner");
+	// Disable everything and re-enable what we need
+	progressBar.classList.add("hidden");
+	progressFiller.classList.add("hidden");
+	loading.classList.add("hidden");
 	switch(progressType)
 	{
 		case "none":
-			progressBar.classList.add("hidden");
-			loading.classList.add("hidden");
+			progressFiller.classList.remove("hidden");
 			break;
 		case "progressbar":
 			progressBar.classList.remove("hidden");
-			loading.classList.add("hidden");
 			break;
 		case "spinner":
-			progressBar.classList.add("hidden");
 			loading.classList.remove("hidden");
 			break;
 		default:
@@ -270,15 +272,14 @@ async function init(){
 	// This 'list' only ever contains a single game
 	selectedGameList = new GamesList(gamesList, "Selected game", "Selected game", /*isClickable*/true);
 	selectedGameList.listDiv.classList.add("hidden");
-	var statusMessage = document.getElementById("statusMessage");
-	statusMessage.textContent = "Loading games";
+	showStatus("Loading games", "spinner");
 	supportedGamesList.listDiv.addEventListener("click", handleGameStart);
 	freeGamesList.listDiv.addEventListener("click", handleLinkElement);
 	var hasGamesData = await getGamesData();
 	if(hasGamesData)
 	{
 		if(!stopLoading)
-			statusMessage.textContent = "Click on a game to play";
+			showStatus("Click on a game to play", "none");
 	}
 	else
 	{
@@ -286,10 +287,8 @@ async function init(){
 		var supportedStoreList = new GamesList(storeList, "Supported stores", "Select a store to login", /*isClickable*/true);
 		supportedStoreList.addGame("https://www.gog.com/en/##openlogin", "Login to GOG.com", "gogassets/logo.png");
 		supportedStoreList.listDiv.addEventListener("click", handleLinkElement);
-		statusMessage.textContent = "Reload page after logging in";
+		showStatus("Reload page after logging in", "none");
 		storeList.classList.remove("hidden");
 	}
-	var loading = document.getElementById("spinner");
-	loading.classList.add("hidden");
 }
 document.addEventListener("DOMContentLoaded", init);
