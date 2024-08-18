@@ -33,6 +33,17 @@ support for modern games is also planned in the future.
 2. The CheerpX Games Runner tab will open. Login to GOG.com if needed.
 3. Choose a game from the list and click it's icon to run it in your browser.
 
+# Example games
+
+This is non-exhaustive list of games which are known to work, most of them available for free from GOG.com
+
+* Akalabeth: World of Doom
+* Jill of the Jungle
+* Tyrian 2000
+* Ultima 4
+* Ultima Martian Dreams
+* Ultima Savage Empire
+
 # Bugs and Issues
 
 Please use [Issues](https://github.com/leaningtech/cheerpx-games-runner/issues) to report any bug.
