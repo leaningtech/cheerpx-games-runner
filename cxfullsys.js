@@ -15,6 +15,8 @@ async function handleMessage(m)
 	else if(data.type == "start")
 	{
 		gameConfig = data.gameConfig;
+		// Acquire focus to make sure we receive keyboard events
+		window.focus();
 		cx.run(/*MhZ*/20, {mem:64, bios:"/files/bios.bin", vgaBios:"/files/vgabios-stdvga.bin", disk:gameConfig.dosImage, cd:gameConfig.cdImage});
 	}
 	else
