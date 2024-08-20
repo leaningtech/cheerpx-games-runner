@@ -123,7 +123,7 @@ async function sendMessageAndWaitReply(port, msg)
 		port.postMessage(msg);
 	});
 }
-async function getGameData(id)
+async function getGameData(id, licenseList)
 {
 	// Return cached information if we can
 	var cachedData = localStorage.getItem(id);
@@ -154,8 +154,31 @@ async function getGameData(id)
 		var isUsingDosBox = gameData.isUsingDosBox;
 		var dateObj = new Date(gameData._embedded.product.globalReleaseDate);
 		// Save the year, we will use it in the future to enable more games as CheerpX improves
+		var releaseYear = dateObj.getFullYear();
+		// Some games only report the isUsingDosBox flag for the container PACK, so take it into account
+		var includedInGames = gameData._links.isIncludedInGames;
+		if(includedInGames && !isUsingDosBox)
+		{
+			for(var i=0;i<includedInGames.length;i++)
+			{
+				var packUrl = new URL(includedInGames[i].href);
+				var packId = packUrl.pathname.split("/").pop();
+				// Only take into account packs that we own, the logic here is that the
+				// missing isUsingDosBox flag was most likely correct in the pack that
+				// was bough.
+				if(licenseList.indexOf(packId) < 0)
+					continue;
+				// Potentially recursive lookup, but caching will prevent double requests
+				var packData = await getGameData(packId, licenseList);
+				if(packData != null && packData.isUsingDosBox)
+				{
+					isUsingDosBox = true;
+					break;
+				}
+			}
+		}
 		// Initialize the configuration to run the game to null, it will be populated after installation
-		var ret = {productType: productType, title: title, imgUrl: imgUrl, isUsingDosBox: isUsingDosBox, releaseYear: dateObj.getFullYear(), gameConfig: null};
+		var ret = {productType: productType, title: title, imgUrl: imgUrl, isUsingDosBox: isUsingDosBox, releaseYear: releaseYear, gameConfig: null};
 		localStorage.setItem(id, JSON.stringify(ret));
 		return ret;
 	}
@@ -179,7 +202,7 @@ async function getGamesData()
 		for(var i=0;i<licenses.length;i++)
 		{
 			var id = licenses[i];
-			var gameData = await getGameData(id);
+			var gameData = await getGameData(id, licenses);
 			if(stopLoading)
 				break;
 			if(gameData == null)
