@@ -123,9 +123,45 @@ async function sendMessageAndWaitReply(port, msg)
 		port.postMessage(msg);
 	});
 }
-async function getGamesData()
+async function getGameData(id)
 {
 	// TODO: Cache data and only update new entries in licences
+	var r = await fetch(`https://api.gog.com/v2/games/${id}`);
+	if(r.status != 200)
+		return null;
+	try
+	{
+		var gameData = await r.json();
+		if(stopLoading)
+			return null;
+		var productType = gameData._embedded.productType;
+		// Ignore product types we don't know about
+		switch(productType)
+		{
+			case "GAME":
+			case "PACK":
+			case "DLC":
+				break;
+			default:
+				return null;
+		}
+		// Save the information we need for this game
+		var title = gameData._embedded.product.title;
+		var imgUrl = gameData._embedded.product._links.image.href.replace("{formatter}", "glx_logo_2x");
+		var isUsingDosBox = gameData.isUsingDosBox;
+		var dateObj = new Date(gameData._embedded.product.globalReleaseDate);
+		// Save the year, we will use it in the future to enable more games as CheerpX improves
+		return {productType: productType, title: title, imgUrl: imgUrl, isUsingDosBox: isUsingDosBox, releaseYear: dateObj.getFullYear()};
+	}
+	catch(e)
+	{
+		// Be robust to unexpected formats
+		console.warn(`Cannot parse data for game ${id}`);
+	}
+	return null;
+}
+async function getGamesData()
+{
 	try
 	{
 		// Get the list of all purchased games
@@ -137,30 +173,19 @@ async function getGamesData()
 		for(var i=0;i<licenses.length;i++)
 		{
 			var id = licenses[i];
-			var r = await fetch(`https://api.gog.com/v2/games/${id}`);
-			if(r.status != 200)
+			var gameData = await getGameData(id);
+			if(stopLoading)
+				break;
+			if(gameData == null)
 				continue;
-			try
-			{
-				var gameData = await r.json();
-				if(stopLoading)
-					break;
-				if(gameData._embedded.productType != "GAME")
-					continue;
-				// Save the information we need for this game
-				var title = gameData._embedded.product.title;
-				var imgUrl = gameData._embedded.product._links.image.href.replace("{formatter}", "glx_logo_2x");
-				// Only DosBOX games are supported for now
-				if(gameData.isUsingDosBox)
-					supportedGamesList.addGame(id, title, imgUrl);
-				else
-					unsupportedGamesList.addGame(id, title, imgUrl);
-			}
-			catch(e)
-			{
-				// Be robust to unexpected formats
-				console.warn(`Cannot parse data for game ${id}`);
-			}
+			// Only add full games to the list
+			if(gameData.productType != "GAME")
+				continue;
+			// Only DosBOX games are supported for now
+			if(gameData.isUsingDosBox)
+				supportedGamesList.addGame(id, gameData.title, gameData.imgUrl);
+			else
+				unsupportedGamesList.addGame(id, gameData.title, gameData.imgUrl);
 		}
 	}
 	catch(e)
