@@ -51,4 +51,5 @@ function handleFetch(ev)
 	}
 }
 chrome.action.onClicked.addListener(handleClick);
+chrome.runtime.setUninstallURL("https://labs.leaningtech.com/feedback-gamesrunner");
 addEventListener("fetch", handleFetch);
