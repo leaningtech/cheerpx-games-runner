@@ -125,7 +125,10 @@ async function sendMessageAndWaitReply(port, msg)
 }
 async function getGameData(id)
 {
-	// TODO: Cache data and only update new entries in licences
+	// Return cached information if we can
+	var cachedData = localStorage.getItem(id);
+	if(cachedData != null)
+		return JSON.parse(cachedData);
 	var r = await fetch(`https://api.gog.com/v2/games/${id}`);
 	if(r.status != 200)
 		return null;
@@ -151,7 +154,10 @@ async function getGameData(id)
 		var isUsingDosBox = gameData.isUsingDosBox;
 		var dateObj = new Date(gameData._embedded.product.globalReleaseDate);
 		// Save the year, we will use it in the future to enable more games as CheerpX improves
-		return {productType: productType, title: title, imgUrl: imgUrl, isUsingDosBox: isUsingDosBox, releaseYear: dateObj.getFullYear()};
+		// Initialize the configuration to run the game to null, it will be populated after installation
+		var ret = {productType: productType, title: title, imgUrl: imgUrl, isUsingDosBox: isUsingDosBox, releaseYear: dateObj.getFullYear(), gameConfig: null};
+		localStorage.setItem(id, JSON.stringify(ret));
+		return ret;
 	}
 	catch(e)
 	{
@@ -219,29 +225,25 @@ async function handleGameStart(ev)
 	selectedGameList.listDiv.appendChild(gameElem);
 	gamesList.classList.add("vcenter");
 	var id = gameElem.getAttribute("data-id");
-	var gameConfig = localStorage.getItem(id);
-	if(gameConfig == null)
+	// Game data _must_ be stored in the localStorage already
+	var gameData = JSON.parse(localStorage.getItem(id));
+	if(gameData.gameConfig == null)
 	{
 		showStatus("Installing the game", "none");
 		linuxIframe = await initCheerpXLinux();
-		gameConfig = await sendMessageAndWaitReply(cxLinuxPort, {type: "install", gameId: id});
+		var gameConfig = await sendMessageAndWaitReply(cxLinuxPort, {type: "install", gameId: id});
 		linuxIframe.remove();
 		if(gameConfig == null)
 		{
 			showStatus("Installation failure, reload the page to try another game", "none");
 			return;
 		}
-		else
-		{
-			localStorage.setItem(id, JSON.stringify(gameConfig));
-		}
-	}
-	else
-	{
-		gameConfig = JSON.parse(gameConfig);
+		gameData.gameConfig = gameConfig;
+		// Update cached data to include the config
+		localStorage.setItem(id, JSON.stringify(gameData));
 	}
 	await initCheerpXFullSys();
-	await sendMessageAndWaitReply(cxFullSysPort, {type: "start", gameConfig: gameConfig});
+	await sendMessageAndWaitReply(cxFullSysPort, {type: "start", gameConfig: gameData.gameConfig});
 debugger;
 }
 function handleLinkElement(ev)
