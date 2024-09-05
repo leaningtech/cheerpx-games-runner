@@ -59,8 +59,10 @@ async function handleMessage(m)
 	{
 		port = data.port;
 		port.onmessage = handleMessage;
-		await CheerpXApp.promise;
-		cx = await CheerpXApp.create({devices:[{type:"block",url:"https://disks.webvm.io/debian_cxgr_20240807.ext2",name:"block1"}],mounts:[{type:"ext2",dev:"block1",path:"/"},{type:"cheerpOS",dev:"/files",path:"/files"},{type:"devs",dev:"",path:"/dev"}]});
+		await CheerpX.Linux.promise;
+		var idbDevice = await CheerpX.IDBDevice.create("files");
+		var overlayDevice = await CheerpX.OverlayDevice.create(await CheerpX.CloudDevice.create("https://disks.webvm.io/debian_cxgr_20240807.ext2"), await CheerpX.IDBDevice.create("block1"));
+		cx = await CheerpX.Linux.create({mounts:[{type:"ext2",dev:overlayDevice,path:"/"},{type:"tree",dev:idbDevice,path:"/files"},{type:"devs",path:"/dev"}]});
 		sendStatus("CheerpX ready", "none");
 		port.postMessage({type: "response", responseId: data.responseId, value: null});
 	}
@@ -97,13 +99,13 @@ async function installGame(gameId)
 	await downloadInstaller("/vgabios-stdvga.bin", "/files/vgabios-stdvga.bin", /*reportProgress*/false);
 	sendStatus("Extracting game data", "spinner");
 	var ret = await cx.run("/usr/bin/innoextract", ["-m", "-d", `/files/${gameId}/`, "/files/installer.exe"]);
-	if(ret != 0)
+	if(ret.status != 0)
 		return null;
 	// This copy seems to be hardcoded, even if there are mechanisms such as the game script that would support this copy
 	if(await cx.run("/usr/bin/test", ["-d", `/files/${gameId}/__support/save/`]) == 0)
 	{
 		var ret = await cx.run("/bin/cp", ["-rv", `/files/${gameId}/__support/save/.`, `/files/${gameId}`]);
-		if(ret != 0)
+		if(ret.status != 0)
 			return null;
 	}
 	sendStatus("Copying game data", "spinner");
@@ -112,43 +114,43 @@ async function installGame(gameId)
 	var freedosStart = 63 * 512;
 	// Use a python script to parse the configuration and copy the right files
 	var ret = await cx.run("/usr/bin/python3", ["/files/autoexec_parse.py", `/files/${gameId}`, `/files/${gameId}_c.img@@${freedosStart}`, "/tmp/autoexec.bat"]);
-	if(ret != 0)
+	if(ret.status != 0)
 		return null;
 	// We need a customized copy of the DOS setup for the custom autoexec
 	sendStatus("Setting up DOS", "spinner");
 	var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDCONFIG.SYS", "/tmp/FDCONFIG.SYS"]);
-	if(ret != 0)
+	if(ret.status != 0)
 		return null;
 	var ret = await cx.run("/bin/sed", ["-i", "s/MENUDEFAULT=2,5/MENUDEFAULT=4,0/", "/tmp/FDCONFIG.SYS"]);
-	if(ret != 0)
+	if(ret.status != 0)
 		return null;
 	var ret = await cx.run("/usr/bin/mdel", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDCONFIG.SYS"]);
-	if(ret != 0)
+	if(ret.status != 0)
 		return null;
 	var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "/tmp/FDCONFIG.SYS", "::FDCONFIG.SYS"]);
-	if(ret != 0)
+	if(ret.status != 0)
 		return null;
 	// Copy generated autoexec.bat the end of original fdauto.bat
 	var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDAUTO.BAT", "/tmp/FDAUTO.BAT"]);
-	if(ret != 0)
+	if(ret.status != 0)
 		return null;
 	var ret = await cx.run("/bin/bash", ["-c", "cat /tmp/FDAUTO.BAT /tmp/autoexec.bat > /tmp/FDAUTO.NEW.BAT"]);
-	if(ret != 0)
+	if(ret.status != 0)
 		return null;
 	var ret = await cx.run("/usr/bin/mdel", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "::FDAUTO.BAT"]);
-	if(ret != 0)
+	if(ret.status != 0)
 		return null;
 	var ret = await cx.run("/usr/bin/mcopy", ["-i", `/files/${gameId}_c.img@@${freedosStart}`, "-v", "/tmp/FDAUTO.NEW.BAT", "::FDAUTO.BAT"]);
-	if(ret != 0)
+	if(ret.status != 0)
 		return null;
 	sendStatus("Cleaning up", "spinner");
 	var ret = await cx.run("/bin/rm", ["-rf", `/files/${gameId}/`, "/files/installer.exe", "/tmp/FDCONFIG.SYS", "/tmp/FDAUTO.BAT", "/tmp/FDAUTO.NEW.BAT"]);
-	if(ret != 0)
+	if(ret.status != 0)
 		return null;
 	var cdImage = null;
-	if(await cx.run("/usr/bin/test", ["-f", `/files/${gameId}_d.iso`]) == 0)
-		cdImage = `/files/${gameId}_d.iso`;
+	if((await cx.run("/usr/bin/test", ["-f", `/files/${gameId}_d.iso`])).status == 0)
+		cdImage = `${gameId}_d.iso`;
 	await cx.flushIO();
-	return {dosImage: `/files/${gameId}_c.img`, cdImage: cdImage};
+	return {dosImage: `${gameId}_c.img`, cdImage: cdImage};
 }
 addEventListener("message", handleMessage);

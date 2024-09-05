@@ -8,8 +8,8 @@ async function handleMessage(m)
 	{
 		port = data.port;
 		port.onmessage = handleMessage;
-		await CheerpXSystem.promise;
-		cx = await CheerpXSystem.create();
+		await CheerpX.System.promise;
+		cx = await CheerpX.System.create();
 		port.postMessage({type: "response", responseId: data.responseId, value: null});
 	}
 	else if(data.type == "start")
@@ -17,7 +17,17 @@ async function handleMessage(m)
 		gameConfig = data.gameConfig;
 		// Acquire focus to make sure we receive keyboard events
 		window.focus();
-		cx.run(/*MhZ*/20, {mem:64, bios:"/files/bios.bin", vgaBios:"/files/vgabios-stdvga.bin", disk:gameConfig.dosImage, cd:gameConfig.cdImage});
+		var idbDevice = await CheerpX.IDBDevice.create("files");
+		var sysOpts = {
+			MhZ:20,
+			mem:64,
+			bios:await CheerpX.FileDevice.create(idbDevice, "bios.bin"),
+			vgaBios:await CheerpX.FileDevice.create(idbDevice, "vgabios-stdvga.bin"),
+			disks:[{dev:await CheerpX.FileDevice.create(idbDevice, gameConfig.dosImage), type:"ata"}]
+		}
+		if (gameConfig.cdImage)
+			sysOpts.disks.push({dev: await CheerpX.FileDevice.create(idbDevice, gameConfig.cdImage), type:"atapi"})
+		cx.run(sysOpts);
 	}
 	else
 	{
