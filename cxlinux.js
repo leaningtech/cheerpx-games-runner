@@ -1,27 +1,9 @@
 var cheerpOSFds = [];
 var port = null;
 var cx = null;
-async function cheerpOSOpenWrapper(path, mode)
+var dataDevice = null;
+async function downloadInstaller(url, dataPath, reportProgress)
 {
-	return new Promise(function(resolve, reject)
-	{
-		cheerpOSOpen(cheerpOSFds, path, mode, resolve);
-	});
-}
-async function cheerpOSWriteWrapper(fd, buf, off, len)
-{
-	return new Promise(function(resolve, reject)
-	{
-		cheerpOSWrite(cheerpOSFds, fd, buf, off, len, resolve)
-	});
-}
-async function cheerpOSCloseWrapper(fd)
-{
-	return cheerpOSClose(cheerpOSFds, fd);
-}
-async function downloadInstaller(url, cheerpOSPath, reportProgress)
-{
-	var fd = await cheerpOSOpenWrapper(cheerpOSPath, "w");
 	var response = await fetch(url);
 	var fileLengthStr = response.headers.get("Content-Length");
 	var fileLength = -1;
@@ -29,6 +11,7 @@ async function downloadInstaller(url, cheerpOSPath, reportProgress)
 		fileLength = parseInt(fileLengthStr);
 	var reader = response.body.getReader();
 	var curLength = 0;
+	var chunks = [];
 	while(1)
 	{
 		var data = await reader.read();
@@ -37,10 +20,17 @@ async function downloadInstaller(url, cheerpOSPath, reportProgress)
 		curLength += data.value.byteLength;
 		if(reportProgress)
 			port.postMessage({type: "progress", value: curLength, total:  fileLength});
-		var tmp = new Int8Array(data.value);
-		await cheerpOSWriteWrapper(fd, tmp, 0, tmp.length);
+		chunks.push(new Uint8Array(data.value));
 	}
-	cheerpOSCloseWrapper(fd);
+	var buf = new Uint8Array(curLength);
+	curLength = 0;
+	for(var i=0;i<chunks.length;i++)
+	{
+		var b = chunks[i];
+		buf.set(b, curLength);
+		curLength += b.length;
+	}
+	dataDevice.writeFile(dataPath, buf);
 }
 function sendStatus(status, progressType)
 {
@@ -62,7 +52,8 @@ async function handleMessage(m)
 		await CheerpX.Linux.promise;
 		var idbDevice = await CheerpX.IDBDevice.create("files");
 		var overlayDevice = await CheerpX.OverlayDevice.create(await CheerpX.CloudDevice.create("https://disks.webvm.io/debian_cxgr_20240807.ext2"), await CheerpX.IDBDevice.create("block1"));
-		cx = await CheerpX.Linux.create({mounts:[{type:"ext2",dev:overlayDevice,path:"/"},{type:"tree",dev:idbDevice,path:"/files"},{type:"devs",path:"/dev"}]});
+		dataDevice = await CheerpX.DataDevice.create();
+		cx = await CheerpX.Linux.create({mounts:[{type:"ext2",dev:overlayDevice,path:"/"},{type:"tree",dev:idbDevice,path:"/files"},{type:"tree",dev:dataDevice,path:"/data"},{type:"devs",path:"/dev"}]});
 		sendStatus("CheerpX ready", "none");
 		port.postMessage({type: "response", responseId: data.responseId, value: null});
 	}
@@ -90,19 +81,27 @@ async function installGame(gameId)
 	// TODO: How to parse this structure
 	var winInstallerUrl = d.downloads[0][1].windows[0].manualUrl;
 	sendStatus("Downloading installer", "progressbar");
-	await downloadInstaller("/autoexec_parse.py", "/files/autoexec_parse.py", /*reportProgress*/false);
-	await downloadInstaller("https://www.gog.com" + winInstallerUrl, "/files/installer.exe", /*reportProgress*/true);
+	await downloadInstaller("/autoexec_parse.py", "/autoexec_parse.py", /*reportProgress*/false);
+	await downloadInstaller("https://www.gog.com" + winInstallerUrl, "/installer.exe", /*reportProgress*/true);
 	sendStatus("Downloading DOS image", "spinner");
-	await downloadInstaller("/freedos.img", `/files/${gameId}_c.img`, /*reportProgress*/false);
+	await downloadInstaller("/freedos.img", "/freedos.img", /*reportProgress*/false);
 	// TODO: Copy only once
-	await downloadInstaller("/bios.bin", "/files/bios.bin", /*reportProgress*/false);
-	await downloadInstaller("/vgabios-stdvga.bin", "/files/vgabios-stdvga.bin", /*reportProgress*/false);
+	await downloadInstaller("/bios.bin", "/bios.bin", /*reportProgress*/false);
+	await downloadInstaller("/vgabios-stdvga.bin", "/vgabios-stdvga.bin", /*reportProgress*/false);
+	// Copy the BIOS images to persistent storage
+	var ret = await cx.run("/bin/cp", ["-v", "/data/bios.bin", `/files/bios.bin`]);
+	if(ret.status != 0)
+		return null;
+	var ret = await cx.run("/bin/cp", ["-v", "/data/vgabios-stdvga.bin", `/files/vgabios-stdvga.bin`]);
+	if(ret.status != 0)
+		return null;
 	sendStatus("Extracting game data", "spinner");
-	var ret = await cx.run("/usr/bin/innoextract", ["-m", "-d", `/files/${gameId}/`, "/files/installer.exe"]);
+	var ret = await cx.run("/usr/bin/innoextract", ["-m", "-d", `/files/${gameId}/`, "/data/installer.exe"]);
 	if(ret.status != 0)
 		return null;
 	// This copy seems to be hardcoded, even if there are mechanisms such as the game script that would support this copy
-	if(await cx.run("/usr/bin/test", ["-d", `/files/${gameId}/__support/save/`]) == 0)
+	var ret = await cx.run("/usr/bin/test", ["-d", `/files/${gameId}/__support/save/`]);
+	if(ret.status == 0)
 	{
 		var ret = await cx.run("/bin/cp", ["-rv", `/files/${gameId}/__support/save/.`, `/files/${gameId}`]);
 		if(ret.status != 0)
@@ -112,8 +111,12 @@ async function installGame(gameId)
 	// Edit the standard FreeDOS setup to immediately start in safe mode
 	// NOTE: FreeDOS uses a traditional 63 sector start location
 	var freedosStart = 63 * 512;
+	// Copy the image to a R/W filesystem
+	var ret = await cx.run("/bin/cp", ["-v", "/data/freedos.img", `/files/${gameId}_c.img`]);
+	if(ret.status != 0)
+		return null;
 	// Use a python script to parse the configuration and copy the right files
-	var ret = await cx.run("/usr/bin/python3", ["/files/autoexec_parse.py", `/files/${gameId}`, `/files/${gameId}_c.img@@${freedosStart}`, "/tmp/autoexec.bat"]);
+	var ret = await cx.run("/usr/bin/python3", ["/data/autoexec_parse.py", `/files/${gameId}`, `/files/${gameId}_c.img@@${freedosStart}`, "/tmp/autoexec.bat"]);
 	if(ret.status != 0)
 		return null;
 	// We need a customized copy of the DOS setup for the custom autoexec
